@@ -681,16 +681,32 @@ let _lastMatchActive = null;
 const MATCH_ACTIVE_STATES = new Set(['PLAY', 'GOAL_SCORED', 'PAUSED', 'MATCH_END', 'PENALTY_SHOOTOUT']);
 function syncMatchActiveClass() {
     const isActive = MATCH_ACTIVE_STATES.has(currentState);
-    if (isActive === _lastMatchActive) return;
-    _lastMatchActive = isActive;
-    document.body.classList.toggle('match-active', isActive);
-    // MOBILE BUGFIX: also mirror onto <html> (some mobile browsers scroll
-    // the html element rather than body) so the page can't drift under the
-    // fixed touch controls mid-match — see the body.match-active rule and
-    // its comment in style.css. Purely a scroll-lock flag; does not affect
-    // match state, timing, or any gameplay logic.
-    document.documentElement.classList.toggle('body-scroll-locked', isActive);
+    if (isActive !== _lastMatchActive) {
+        _lastMatchActive = isActive;
+        // Deliberately NOT reused for the scroll lock below: this class also
+        // drives the stadium-crowd team-color bands (style.css), which are
+        // meant to stay off during TUTORIAL — widening MATCH_ACTIVE_STATES
+        // itself would turn those on during tutorial too. The scroll lock
+        // below uses its own, separate check instead.
+        document.body.classList.toggle('match-active', isActive);
+    }
+    // MOBILE BUGFIX: lock page scroll on <html> (some mobile browsers scroll
+    // that instead of body) any time the touch controls are meant to be
+    // showing — live match OR tutorial — so the page can't drift out from
+    // under the fixed joystick/shoot buttons. This mirrors the same
+    // inMatch||inTutorial check syncTouchControlsVisibility() uses in
+    // input.js. The IntersectionObserver-based fix in globals.js is the
+    // primary fix (it hides controls the instant the game scrolls out of
+    // view regardless of cause); this is just a backstop that makes that
+    // scroll harder to trigger in the first place. Purely a CSS class flag
+    // — does not touch match state, timing, or any gameplay logic.
+    const lockScroll = isActive || currentState === 'TUTORIAL';
+    if (lockScroll !== _lastScrollLocked) {
+        _lastScrollLocked = lockScroll;
+        document.documentElement.classList.toggle('body-scroll-locked', lockScroll);
+    }
 }
+let _lastScrollLocked = null;
 
 // Pushes the currently active team colors (red/team-A side, blue/team-B
 // side) into the CSS custom properties the stadium crowd bands read for
