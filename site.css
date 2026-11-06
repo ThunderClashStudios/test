@@ -187,6 +187,21 @@ html { scroll-behavior: smooth; }
     overflow: hidden;
 }
 
+/* MOBILE BUGFIX (game looks tiny on phone): on a narrow screen every
+   pixel of vertical chrome around the game box is pixels the game itself
+   doesn't get, and a phone has far less room to spare than a desktop
+   window. Tightens just the two paddings that box in #gameWrapper
+   (.game-section's own top/bottom padding, and .game-stage's — see
+   below) specifically under 640px; desktop/tablet layout is completely
+   unaffected. Paired with the matching reduction in the #gameWrapper
+   sizing formula below so the box actually grows into the freed-up room
+   instead of just leaving a smaller gap. */
+@media (max-width: 640px) {
+    .game-section {
+        padding: 6px 6px clamp(10px, 2vh, 18px);
+    }
+}
+
 /* BUGFIX: the game's .stadium-crowd side bands (style.css) are
    position:fixed, top:0/bottom:0 — full viewport height. That's correct
    for the game's own original single-screen layout, but once the site
@@ -266,6 +281,20 @@ html { scroll-behavior: smooth; }
     width: min(100%, calc((100dvh - var(--header-h) - 56px) * 3 / 2));
     height: min(calc(100dvh - var(--header-h) - 56px), calc(100% * 2 / 3));
     aspect-ratio: 3 / 2;
+}
+
+/* MOBILE BUGFIX (game looks tiny on phone), continued: the 56px reserved
+   above matches .game-section's ORIGINAL padding total (28px+36px max).
+   Now that padding is tightened on phones (see .game-section's own
+   max-width:640px rule above, 6px+18px max = 24px), the reserved amount
+   here is lowered to match — so the extra room actually reaches the game
+   box instead of just shrinking the margin around it. Desktop/tablet keep
+   the original 56px/full padding untouched. */
+@media (max-width: 640px) {
+    .game-stage #gameWrapper {
+        width: min(100%, calc((100dvh - var(--header-h) - 24px) * 3 / 2));
+        height: min(calc(100dvh - var(--header-h) - 24px), calc(100% * 2 / 3));
+    }
 }
 
 .ad-slot {
