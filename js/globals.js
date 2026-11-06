@@ -82,6 +82,34 @@ const gameWrapperElem = document.getElementById('gameWrapper');
 const goalFlashElem = document.getElementById('goalFlash');
 const celebrationOverlay = document.getElementById('celebrationOverlay');
 
+// MOBILE BUGFIX: the on-screen joystick/shoot buttons are position:fixed to
+// the real viewport (so they still reach the screen edges even when the
+// game box is letterboxed — see style.css). That's correct while the game
+// itself is what's on screen, but this site wraps the game in a normal
+// scrollable page (header above, About/Controls text below), and a player
+// can scroll away from the canvas without ever changing game state (e.g.
+// mid-tutorial, or just browsing while a match is paused). When that
+// happens the fixed controls stay glued to the screen edges and visually
+// bleed into whatever page content has scrolled underneath them instead of
+// disappearing with the game.
+// window.IS_GAME_IN_VIEW tracks whether #gameWrapper is actually visible on
+// screen right now; syncTouchControlsVisibility() in input.js ANDs this
+// together with its existing game-state check, so the controls now need
+// BOTH "a live match/tutorial is happening" AND "the game canvas is
+// actually what's on screen" to show — purely a visibility gate, doesn't
+// touch game state, scoring, or input handling itself.
+window.IS_GAME_IN_VIEW = true;
+if ('IntersectionObserver' in window && gameWrapperElem) {
+    const _gameVisibilityObserver = new IntersectionObserver((entries) => {
+        // threshold 0.4: controls reappear once the game is reasonably back
+        // in view, not the instant a single pixel of it peeks on-screen —
+        // avoids a flicker right at the scroll boundary.
+        window.IS_GAME_IN_VIEW = entries[entries.length - 1].intersectionRatio >= 0.4;
+        if (typeof syncTouchControlsVisibility === 'function') syncTouchControlsVisibility();
+    }, { threshold: [0, 0.4, 1] });
+    _gameVisibilityObserver.observe(gameWrapperElem);
+}
+
 const isMobileDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
 let currentState = 'MENU';
