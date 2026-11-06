@@ -947,7 +947,16 @@ function syncTouchControlsVisibility() {
     const inMatch = (currentState === 'PLAY' || currentState === 'PAUSED' ||
         currentState === 'GOAL_SCORED' || currentState === 'PENALTY_SHOOTOUT');
     const inTutorial = currentState === 'TUTORIAL';
-    if ((inMatch || inTutorial) && isMobileDevice) {
+    // MOBILE BUGFIX: also require the game canvas to actually be in view
+    // (see window.IS_GAME_IN_VIEW / the IntersectionObserver set up in
+    // globals.js) — otherwise the fixed-position controls kept showing
+    // whenever a match/tutorial was active even after the player scrolled
+    // down to the About/Controls page content below the game, overlapping
+    // that text. Defaults to true if the observer isn't available for any
+    // reason, so this can only ever hide controls earlier, never fail to
+    // show them when it should.
+    const gameInView = (typeof window.IS_GAME_IN_VIEW === 'boolean') ? window.IS_GAME_IN_VIEW : true;
+    if ((inMatch || inTutorial) && isMobileDevice && gameInView) {
         touchControlsElem.style.display = 'block';
         touchControlsElem.className = 'touch-controls is-active mode-' + (inTutorial ? 'pve' : gameMode);
         window._touchControlsWereVisible = true;
